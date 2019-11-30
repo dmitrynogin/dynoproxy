@@ -2,6 +2,7 @@
 using Dynamitey;
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 
 namespace Dynoproxy
@@ -23,12 +24,10 @@ namespace Dynoproxy
             public void Intercept(IInvocation invocation) =>
                 invocation.ReturnValue = Dynamic.InvokeMember(
                     Target,
-                    Name(invocation.Method), 
-                    invocation.Arguments);
-
-            string Name(MethodInfo method) =>
-                method.GetCustomAttribute<DescriptionAttribute>()?.Description ??
-                method.Name;
+                    invocation.Method.Name,
+                    invocation.Method.IsDefined(typeof(DescriptionAttribute)) 
+                        ? invocation.Arguments.Prepend(invocation.Method).ToArray()
+                        : invocation.Arguments);
         }
     }
 }
