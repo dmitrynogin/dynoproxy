@@ -1,6 +1,8 @@
 ﻿using Castle.DynamicProxy;
 using Dynamitey;
 using System;
+using System.ComponentModel;
+using System.Reflection;
 
 namespace Dynoproxy
 {
@@ -19,7 +21,14 @@ namespace Dynoproxy
             public Interceptor(object target) => Target = target;
             object Target { get; }
             public void Intercept(IInvocation invocation) =>
-                invocation.ReturnValue = Dynamic.InvokeMember(Target, invocation.Method.Name, invocation.Arguments);
+                invocation.ReturnValue = Dynamic.InvokeMember(
+                    Target,
+                    Name(invocation.Method), 
+                    invocation.Arguments);
+
+            string Name(MethodInfo method) =>
+                method.GetCustomAttribute<DescriptionAttribute>()?.Description ??
+                method.Name;
         }
     }
 }
