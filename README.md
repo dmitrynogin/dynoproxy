@@ -1,4 +1,4 @@
-# dynoproxy
+# Dynoproxy
 Represents dynamic sources through strictly typed proxies:
 
 ```csharp
