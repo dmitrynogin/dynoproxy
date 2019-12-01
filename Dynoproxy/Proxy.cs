@@ -9,25 +9,27 @@ namespace Dynoproxy
 {
     public static class Proxy
     {
-        public static T Create<T>(this object source) where T : class
+        public static T Create<T>(object target) where T : class =>
+            Create<T>(call => Dynamic.InvokeMember(
+                target, call.Name, call.Args.ToArray()));
+
+        public static T Create<T>(Func<ProxyCall, object> target) where T : class
         {
             var proxyGenerator = new ProxyGenerator();
             return proxyGenerator.CreateInterfaceProxyWithoutTarget<T>(
                 ProxyGenerationOptions.Default,
-                new Interceptor(source));
+                new Interceptor(target));
         }
 
         class Interceptor : IInterceptor
         {
-            public Interceptor(object target) => Target = target;
-            object Target { get; }
+            public Interceptor(Func<ProxyCall, object> target) => Target = target;
+            Func<ProxyCall, object> Target { get; }
             public void Intercept(IInvocation invocation) =>
-                invocation.ReturnValue = Dynamic.InvokeMember(
-                    Target,
-                    invocation.Method.Name,
-                    invocation.Method.IsDefined(typeof(DescriptionAttribute)) 
-                        ? invocation.Arguments.Prepend(invocation.Method).ToArray()
-                        : invocation.Arguments);
+                invocation.ReturnValue = Target(
+                    new ProxyCall(invocation.Method.Name, invocation.Arguments)
+                        .Returns(invocation.Method.ReturnType)
+                        .Define(invocation.Method.GetCustomAttributes()));
         }
     }
 }
