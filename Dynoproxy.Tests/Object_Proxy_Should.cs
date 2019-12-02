@@ -7,7 +7,7 @@ using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 namespace Dynoproxy.Tests
 {
     [TestClass]
-    public class Proxy_Should
+    public class Object_Proxy_Should
     {
         [TestMethod]
         public void Call_ExpandoObject()
@@ -26,8 +26,8 @@ namespace Dynoproxy.Tests
             {
                 Assert.AreEqual("Add", call.Name);
                 Assert.AreEqual(2, call.Args.Count);
-                Assert.AreEqual(typeof(int), call.Result);
-                Assert.AreEqual("Sum", call.Description);
+                Assert.AreEqual(typeof(int), call.Result.Raw);
+                Assert.AreEqual("Sum", call.Method.Description);
                 return call.Args.OfType<int>().Sum();
             }
 

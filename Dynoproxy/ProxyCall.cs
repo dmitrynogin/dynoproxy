@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Dynoproxy
 {
@@ -22,22 +23,12 @@ namespace Dynoproxy
         public string Name { get; }
         public IReadOnlyList<object> Args { get; }
 
-        public Type Result { get; private set; } = typeof(void);
+        public CallResult Result { get; private set; } = CallResult.None;
         public ProxyCall Returns<T>() => Returns(typeof(T));
-        public ProxyCall Returns(Type type) => With(result: type);
+        public ProxyCall ReturnsAsync<T>() => Returns(typeof(Task<T>));
+        public ProxyCall Returns(Type type) => With(result: new CallResult(type));
 
-        IReadOnlyList<Attribute> Attributes { get; set; } = new Attribute[0];
-        public bool Contains<TAttribute>() where TAttribute : Attribute =>
-            Select<TAttribute>().Any();
-        public T Peek<TAttribute, T>(Func<TAttribute, T> selector) where TAttribute : Attribute =>
-            Select(selector).FirstOrDefault();
-        public IEnumerable<Attribute> Select<TAttribute>() where TAttribute : Attribute =>
-            Select((TAttribute a) => a);
-        public IEnumerable<T> Select<TAttribute, T>(Func<TAttribute, T> selector) where TAttribute : Attribute =>
-            Attributes.OfType<TAttribute>().Select(selector);
-
-        public string Description => Peek((DescriptionAttribute a) => a.Description);
-
+        public CallMethod Method { get; private set; } = CallMethod.Undefined;
         public ProxyCall Define(string description) =>
             Define(new DescriptionAttribute(description));
         public ProxyCall Define<TAttribute>() where TAttribute : Attribute, new() =>
@@ -45,13 +36,13 @@ namespace Dynoproxy
         public ProxyCall Define(IEnumerable<Attribute> attributes) =>
             Define(attributes.ToArray());
         public ProxyCall Define(params Attribute[] attributes) => 
-            With(attributes: attributes.Concat(Attributes).ToArray());
+            With(method: new CallMethod(attributes.Concat(Method)));
         
-        ProxyCall With(Type result = null, IReadOnlyList<Attribute> attributes = null) => 
+        ProxyCall With(CallResult result = null, CallMethod method = null) => 
             new ProxyCall(Name, Args) 
             { 
                 Result = result ?? Result,
-                Attributes = attributes ?? Attributes
+                Method = method ?? Method
             };
     }
 }
