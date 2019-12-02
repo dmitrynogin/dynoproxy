@@ -47,3 +47,9 @@ public class BlogPost
     public string Body { get; set; }
 }
 ```
+
+Use optional `authenticate` parameter to support required authentication schema using custom `HttpClient` extension method to setup `HttpClient.DefaultRequestHeaders`.
+
+```csharp
+Proxy.Create<ITypicode>(url, (HttpClient client) => client.AuthenticateAsync(...))
+```
