@@ -44,5 +44,10 @@ namespace Dynoproxy
                 Result = result ?? Result,
                 Method = method ?? Method
             };
+
+        public bool IsDispose => 
+            Name == nameof(IDisposable.Dispose) &&
+            !Args.Any() && 
+            Result.Void;
     }
 }
