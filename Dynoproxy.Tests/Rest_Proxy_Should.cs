@@ -18,7 +18,7 @@ namespace Dynoproxy.Tests
                 var posts = await proxy.GetAsync();
                 Assert.AreEqual(100, posts.Length);
 
-                var post = await proxy.GetAsync(1, "test");
+                var post = await proxy.GetAsync(1);
                 Assert.AreEqual(1, post.Id);
 
                 post.Title = "XYZ";
@@ -34,7 +34,7 @@ namespace Dynoproxy.Tests
         Task<BlogPost[]> GetAsync();
 
         [Description("GET posts/{0}")]
-        Task<BlogPost> GetAsync(int id, string test);
+        Task<BlogPost> GetAsync(int id);
 
         [Description("POST posts {0}")]
         Task<BlogPost> PostAsync(BlogPost data);
