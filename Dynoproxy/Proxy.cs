@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Dynoproxy
 {
@@ -15,10 +16,10 @@ namespace Dynoproxy
             Create<T>(call => Dynamic.InvokeMember(
                 target, call.Name, call.Args.ToArray()));
 
-        public static T Create<T>(string apiUrl, Action<HttpClient> authenticate = null) where T : class, IDisposable =>
+        public static T Create<T>(string apiUrl, Func<HttpClient, Task> authenticate = null) where T : class, IDisposable =>
             Create<T>(new Uri(apiUrl, UriKind.Absolute), authenticate);
 
-        public static T Create<T>(Uri apiUrl, Action<HttpClient> authenticate = null) where T : class, IDisposable =>
+        public static T Create<T>(Uri apiUrl, Func<HttpClient, Task> authenticate = null) where T : class, IDisposable =>
             RestProxy.Create<T>(apiUrl, authenticate);
 
         public static T Create<T>(Func<ProxyCall, object> target) where T : class

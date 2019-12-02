@@ -12,7 +12,8 @@ namespace Dynoproxy.Helpers
 {
     static class RestProxy
     {
-        public static T Create<T>(Uri apiUrl, Action<HttpClient> authenticate = null) where T : class, IDisposable
+        public static T Create<T>(Uri apiUrl, Func<HttpClient, Task> authenticate = null) 
+            where T : class, IDisposable
         {
             var client = new HttpClient() { BaseAddress = apiUrl };
             return Proxy.Create<T>(Execute);            
@@ -23,32 +24,27 @@ namespace Dynoproxy.Helpers
                     client.Dispose();
                     return null;
                 }
-
-                try { return Try(); }
-                catch (AuthenticationException) when (authenticate != null)
-                {
-                    authenticate(client);
-                    return Try();
-                }
-
-                object Try() => call.Result.Void ? Send() : SendAndReceive();
-                object Send() => client.SendAsync(call);
+                                
+                return call.Result.Void ? Send() : SendAndReceive();
+                object Send() => client.SendAsync(call, authenticate);
                 object SendAndReceive() =>
                     typeof(RestProxy)
                         .GetMethod(nameof(SendAndReceiveAsync), BindingFlags.Static | BindingFlags.NonPublic)
                         .MakeGenericMethod(call.Result.Type)
-                        .Invoke(null, new object[] { client, call });
+                        .Invoke(null, new object[] { client, call, authenticate });
             }
         }        
         
-        static async Task<T> SendAndReceiveAsync<T>(HttpClient client, ProxyCall call)
+        static async Task<T> SendAndReceiveAsync<T>(
+            HttpClient client, ProxyCall call, Func<HttpClient, Task> authenticate)
         {
-            var response = await client.SendAsync(call);
+            var response = await client.SendAsync(call, authenticate);
             var json = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        static async Task<HttpResponseMessage> SendAsync(this HttpClient client, ProxyCall call)
+        static async Task<HttpResponseMessage> SendAsync(
+            this HttpClient client, ProxyCall call, Func<HttpClient, Task> authenticate = null)
         {
             var description = call.Method.Description
                 .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -70,7 +66,13 @@ namespace Dynoproxy.Helpers
 
             var response = await client.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.Unauthorized)
-                throw new AuthenticationException();
+                if(authenticate == null)
+                    throw new AuthenticationException();
+                else
+                {
+                    await authenticate(client);
+                    return await SendAsync(client, call);
+                }
 
             response.EnsureSuccessStatusCode();
             return response;            
