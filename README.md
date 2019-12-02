@@ -1,23 +1,55 @@
 # Dynoproxy
-Represents dynamic sources through strictly typed proxies:
+Represents dynamic sources through strictly typed proxies.
+
+[GitHub](https://github.com/dmitrynogin/dynoproxy) and [NuGet](https://www.nuget.org/packages/Dynoproxy)
+
+#### WEB REST API invocation
 
 ```csharp
 [TestMethod]
-public void Call()
+public async Task Call_REST_API()
 {
-     dynamic c = new ExpandoObject();
-     c.Add = (Func<int, int, int>)((a, b) => a + b);
+    using (var proxy = Proxy.Create<ITypicode>("http://jsonplaceholder.typicode.com"))
+    {
+        var posts = await proxy.GetAsync();
+        Assert.AreEqual(100, posts.Length);
 
-     ICalculator proxy = Proxy.Create<ICalculator>(c);
-     Assert.AreEqual(3, proxy.Add(1, 2));
+        var post = await proxy.GetAsync(1);
+        Assert.AreEqual(1, post.Id);
+
+        post.Title = "XYZ";
+        post = await proxy.PutAsync(1, post);
+        Assert.AreEqual("XYZ", post.Title);
+    }
 }
 ```
 
 where:
 
 ```csharp
-public interface ICalculator
+public interface ITypicode : IDisposable
 {
-     int Add(int a, int b);
+    [Description("GET posts")]
+    Task<BlogPost[]> GetAsync();
+
+    [Description("GET posts/{0}")]
+    Task<BlogPost> GetAsync(int id);
+
+    [Description("PUT posts/{0} {1}")]
+    Task<BlogPost> PutAsync(int id, BlogPost data);
 }
+
+public class BlogPost
+{
+    public int UserId { get; set; }
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string Body { get; set; }
+}
+```
+
+Use optional `authenticate` parameter to support required authentication schema using custom `HttpClient` extension method to setup `HttpClient.DefaultRequestHeaders`.
+
+```csharp
+Proxy.Create<ITypicode>(url, (HttpClient client) => client.AuthenticateAsync(...))
 ```
