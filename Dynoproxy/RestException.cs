@@ -30,7 +30,6 @@ namespace Dynoproxy
 
         public HttpStatusCode StatusCode { get; }
         public string Text { get; }
-
     }
 
     public class RestException<TError> : RestException
