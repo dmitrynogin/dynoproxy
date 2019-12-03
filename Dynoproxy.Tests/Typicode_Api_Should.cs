@@ -8,10 +8,10 @@ using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 namespace Dynoproxy.Tests
 {
     [TestClass]
-    public class Rest_Proxy_Should
+    public class Typicode_Api_Should
     {
         [TestMethod]
-        public async Task Call_REST_API()
+        public async Task Work()
         {
             using (var proxy = Proxy.Create<ITypicode>("http://jsonplaceholder.typicode.com"))
             {

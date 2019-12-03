@@ -1,6 +1,5 @@
 ﻿using Castle.DynamicProxy;
 using Dynamitey;
-using Dynoproxy.Helpers;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -18,9 +17,13 @@ namespace Dynoproxy
 
         public static T Create<T>(string apiUrl, Func<HttpClient, Task> authenticate = null) where T : class, IDisposable =>
             Create<T>(new Uri(apiUrl, UriKind.Absolute), authenticate);
-
         public static T Create<T>(Uri apiUrl, Func<HttpClient, Task> authenticate = null) where T : class, IDisposable =>
-            RestProxy.Create<T>(apiUrl, authenticate);
+            RestClient.Create<T>(apiUrl, typeof(void), authenticate);
+
+        public static T Create<T, TError>(string apiUrl, Func<HttpClient, Task> authenticate = null) where T : class, IDisposable =>
+            Create<T, TError>(new Uri(apiUrl, UriKind.Absolute), authenticate);
+        public static T Create<T, TError>(Uri apiUrl, Func<HttpClient, Task> authenticate = null) where T : class, IDisposable =>
+            RestClient.Create<T>(apiUrl, typeof(TError), authenticate);
 
         public static T Create<T>(Func<ProxyCall, object> target) where T : class
         {
